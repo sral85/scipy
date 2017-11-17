@@ -98,6 +98,7 @@ Correlation Functions
    :toctree: generated/
 
    pearsonr
+   pearsonr_confint
    fisher_exact
    spearmanr
    pointbiserialr
@@ -175,6 +176,7 @@ from ._stats_mstats_common import _find_repeats, linregress, theilslopes
 from ._stats import _kendall_dis, _toint64, _weightedrankedtau
 
 
+
 __all__ = ['find_repeats', 'gmean', 'hmean', 'mode', 'tmean', 'tvar',
            'tmin', 'tmax', 'tstd', 'tsem', 'moment', 'variation',
            'skew', 'kurtosis', 'describe', 'skewtest', 'kurtosistest',
@@ -183,7 +185,7 @@ __all__ = ['find_repeats', 'gmean', 'hmean', 'mode', 'tmean', 'tvar',
            'cumfreq', 'relfreq', 'obrientransform',
            'sem', 'zmap', 'zscore', 'iqr',
            'sigmaclip', 'trimboth', 'trim1', 'trim_mean', 'f_oneway',
-           'pearsonr', 'fisher_exact', 'spearmanr', 'pointbiserialr',
+           'pearsonr', 'pearsonr_confint', 'fisher_exact', 'spearmanr', 'pointbiserialr',
            'kendalltau', 'weightedtau',
            'linregress', 'theilslopes', 'ttest_1samp',
            'ttest_ind', 'ttest_ind_from_stats', 'ttest_rel', 'kstest',
@@ -3013,6 +3015,44 @@ def pearsonr(x, y):
         prob = _betai(0.5*df, 0.5, df/(df+t_squared))
 
     return r, prob
+
+def pearsonr_confint(x, y):
+    r"""
+    Calculates a confidence interval for the Pearson correlation coefficient.
+
+    We use a Fisher-Transform to obtain the confidence interval.
+
+    Parameters
+    ----------
+    x : (N,) array_like
+        Input
+    y : (N,) array_like
+        Input
+
+    Returns
+    -------
+    r : tuple of floats
+        confidence interval of Pearson's correlation coefficient.
+
+
+    Examples
+    --------
+    >>> from scipy import stats
+    >>> a = np.array([0, 0, 0, 1, 1, 1, 1])
+    >>> b = np.arange(7)
+    >>> stats.pearsonr_confint(a, b)
+    (0.8660254037844386, 0.011724811003954654)
+    """
+
+    # x and y should have same length.
+    x = np.array(x)
+    y = np.array(y)
+    corr = pearsonr(x, y)
+    z = np.arctanh(corr[0])
+    sigma = (1 / ((len(x) - 3) ** 0.5))
+    cint = z + np.array([-1, 1]) * sigma * scs.norm.ppf((1 + 0.95) / 2)
+    return(np.tanh(cint))
+
 
 
 def fisher_exact(table, alternative='two-sided'):
